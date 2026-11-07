@@ -2,74 +2,92 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
 <title>ROAD TRIP CHAOS</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;overflow:hidden;background:#101820;color:white;font-family:Arial}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101820;color:#fff;font-family:Arial,sans-serif;touch-action:none}
 #game{position:fixed;inset:0}
-canvas{display:block}
-#rotate{display:none;position:fixed;inset:0;background:#101820;z-index:20;align-items:center;justify-content:center;text-align:center;font-size:23px;padding:30px}
-@media(orientation:portrait){#rotate{display:flex}}
-#menu{position:fixed;inset:0;z-index:5;background:#07131deF;display:grid;place-items:center;padding:15px}
-.card{background:#172b36;padding:22px;border-radius:20px;width:min(420px,95%);text-align:center;border:1px solid #59727d}
-h1{color:#ffbd59;font-size:35px}
-input{width:100%;padding:13px;margin:7px 0;background:#071820;color:white;border:1px solid #55717d;border-radius:9px;font-size:16px}
-button{border:0;border-radius:10px;padding:12px;background:#ffb84d;color:#201707;font-weight:bold;font-size:14px;min-height:42px;touch-action:none}
-.secondary{background:#294653;color:white;border:1px solid #66818d}
+#game canvas{display:block;width:100%;height:100%}
+#rotate{display:none;position:fixed;inset:0;z-index:50;background:#101820;align-items:center;justify-content:center;text-align:center;padding:24px}
+#rotate .rotateCard{max-width:360px}
+#rotate h2{color:#ffbd59}
+#menu{position:fixed;inset:0;z-index:10;background:#07131df2;display:grid;place-items:center;padding:12px;overflow:auto}
+.card{background:#172b36;padding:20px;border-radius:18px;width:min(420px,96%);text-align:center;border:1px solid #59727d;max-height:96%;overflow:auto}
+h1{color:#ffbd59;font-size:clamp(25px,5vw,38px);margin:8px}
+input{width:100%;padding:12px;margin:6px 0;background:#071820;color:#fff;border:1px solid #55717d;border-radius:9px;font-size:16px;min-width:0}
+button{border:0;border-radius:10px;padding:10px 12px;background:#ffb84d;color:#201707;font-weight:bold;font-size:13px;min-height:40px;touch-action:none;cursor:pointer}
+button:disabled{opacity:.5}
+.secondary{background:#294653;color:#fff;border:1px solid #66818d}
 #hud{display:none;position:fixed;inset:0;pointer-events:none}
-.box{background:#10232ddd;border:1px solid #607783;border-radius:12px;padding:9px;pointer-events:auto}
-#top{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:8px}
-#info{font-size:12px;color:#d4e0e4}
-#rightpanel{position:absolute;right:8px;top:65px;display:flex;flex-direction:column;gap:5px}
-#rightpanel button{min-width:58px}
-#bottom{position:absolute;bottom:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:end;gap:8px}
-#walkControls{display:flex;align-items:end;gap:8px}
-#joy{width:110px;height:110px;border-radius:50%;background:#263f4dcc;border:2px solid #8ba5b2;position:relative;pointer-events:auto;touch-action:none}
-#knob{position:absolute;width:42px;height:42px;left:32px;top:32px;border-radius:50%;background:#ffbd59}
-#driveControls{display:flex;gap:6px;align-items:end}
-#gears{position:absolute;right:8px;top:65px;display:flex;flex-direction:column;gap:4px}
-.gear{min-height:32px;padding:5px 12px}
+.box{background:#10232ddd;border:1px solid #607783;border-radius:10px;padding:7px;pointer-events:auto}
+#top{position:absolute;top:7px;left:7px;right:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+#info{font-size:11px;color:#d4e0e4;margin-top:3px}
+#friends{font-size:11px;max-width:32vw;max-height:65px;overflow:auto}
+#gears{position:absolute;right:7px;top:58px;display:flex;flex-direction:column;gap:3px}
+.gear{min-height:29px;padding:4px 10px}
 .active{background:#ffb84d;color:#201707}
-#toast{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:#071820ed;padding:12px 20px;border-radius:12px;display:none}
+#bottom{position:absolute;bottom:max(8px,env(safe-area-inset-bottom));left:8px;right:8px;display:flex;justify-content:space-between;align-items:flex-end;gap:6px}
+#joy{width:clamp(76px,17vw,112px);height:clamp(76px,17vw,112px);border-radius:50%;background:#263f4ddd;border:2px solid #8ba5b2;position:relative;pointer-events:auto;touch-action:none;flex:none}
+#knob{position:absolute;width:38px;height:38px;left:calc(50% - 19px);top:calc(50% - 19px);border-radius:50%;background:#ffbd59;pointer-events:none}
+#driveControls{display:flex;gap:5px;align-items:flex-end;justify-content:flex-end;flex-wrap:wrap;max-width:75%}
+#driveControls button{font-size:clamp(10px,1.8vw,13px);padding:8px;min-height:36px}
+#steering{display:flex;gap:4px}
+#toast{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);background:#071820ed;padding:11px 16px;border-radius:10px;display:none;text-align:center;max-width:85vw}
+#rotateBtn{margin-top:12px}
+@media(orientation:portrait){
+ #rotate{display:flex}
+ #menu,#hud{visibility:hidden}
+}
 @media(max-height:430px){
- #joy{width:85px;height:85px}
- #knob{left:22px;top:22px}
- #bottom button{padding:8px;font-size:12px;min-height:34px}
- #rightpanel{top:60px}
+ .card{padding:12px}
+ #joy{width:78px;height:78px}
+ #knob{width:32px;height:32px;left:calc(50% - 16px);top:calc(50% - 16px)}
+ #driveControls button{min-height:32px;padding:6px}
+ #gears{top:55px}
 }
 </style>
 </head>
 <body>
 <div id="game"></div>
-<div id="rotate">📱<br><br>कृपया फोन को Horizontal (Landscape) करें।</div>
+
+<div id="rotate">
+ <div class="rotateCard">
+  <div style="font-size:48px">📱↻</div>
+  <h2>ROAD TRIP CHAOS</h2>
+  <p>फोन को Horizontal रखें। नीचे दिया बटन दबाकर Landscape मोड की कोशिश करें।</p>
+  <button id="rotateBtn">TRY LANDSCAPE</button>
+  <p style="font-size:12px;color:#b8cbd3">अगर ब्राउज़र अनुमति न दे, फोन का Auto Rotate चालू करके फोन आड़ा करें।</p>
+ </div>
+</div>
 
 <div id="menu">
  <div class="card">
-  <div style="font-size:45px">🚐</div>
+  <div style="font-size:42px">🚐</div>
   <h1>ROAD TRIP<br>CHAOS</h1>
-  <p>Friends • RV Driving • Open World</p>
+  <p>Friends • RV Driving • Forest Road</p>
   <input id="username" maxlength="18" placeholder="अपना Username लिखो">
   <button id="saveName" class="secondary" style="width:100%">USERNAME SAVE</button>
   <br><br>
   <button id="create" style="width:100%">CREATE ROOM</button>
-  <div style="display:flex;gap:6px">
-   <input id="roomCode" maxlength="4" placeholder="ROOM CODE">
+  <div style="display:flex;gap:6px;align-items:center">
+   <input id="roomCode" maxlength="8" placeholder="ROOM CODE">
    <button id="join">JOIN</button>
   </div>
   <p id="menuMsg">अधिकतम 6 खिलाड़ी। दोस्तों को Room Code भेजो।</p>
+  <p style="font-size:11px;color:#b8cbd3">Landscape में खेलें। Internet connection जरूरी है।</p>
  </div>
 </div>
 
 <div id="hud">
  <div id="top">
   <div class="box"><b id="roomLabel">ROOM</b><div id="info">Connecting...</div></div>
-  <div class="box" id="friends">FRIENDS</div>
+  <div class="box" id="friends"><b>FRIENDS</b></div>
   <button id="leave" class="secondary">MENU</button>
  </div>
-
  <div id="gears" class="box">
-  <b style="text-align:center">GEAR</b>
+  <b style="text-align:center;font-size:11px">GEAR</b>
   <button class="gear active" data-gear="P">P</button>
   <button class="gear" data-gear="R">R</button>
   <button class="gear" data-gear="N">N</button>
@@ -78,14 +96,15 @@ button{border:0;border-radius:10px;padding:12px;background:#ffb84d;color:#201707
   <button class="gear" data-gear="3">3</button>
   <button class="gear" data-gear="4">4</button>
  </div>
-
  <div id="bottom">
-  <div id="walkControls">
-   <div id="joy"><div id="knob"></div></div>
-  </div>
+  <div id="joy"><div id="knob"></div></div>
   <div id="driveControls">
+   <div id="steering">
+    <button class="secondary" id="left">◀</button>
+    <button class="secondary" id="right">▶</button>
+   </div>
    <button class="secondary" id="door">🚪 DOOR</button>
-   <button class="secondary" id="enter">ENTER RV</button>
+   <button class="secondary" id="enter">EXIT RV</button>
    <button class="secondary" id="throw">THROW</button>
    <button class="secondary" id="brake">BRAKE</button>
    <button id="gas">GAS ▲</button>
@@ -99,287 +118,205 @@ button{border:0;border-radius:10px;padding:12px;background:#ffb84d;color:#201707
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
 const $=id=>document.getElementById(id);
-const socket=io();
-let myId=null,roomCode="",gameOn=false;
-let gear="P",throttle=0,brake=0,steer=0;
-let walking=false,doorOpen=false;
-let joyX=0,joyY=0,lastMove=0,lastDrive=0;
+const socket=window.io ? window.io() : null;
+let myId=null,roomCode="",gameOn=false,gear="P",throttle=0,brake=0,steer=0;
+let walking=false,doorOpen=false,joyX=0,joyY=0,lastMove=0,lastDrive=0;
 let state={players:[],vehicle:{x:0,z:0,yaw:0,speed:0,gear:"P"}};
 let scene,camera,renderer,rv,doorPivot,players3D=new Map();
 let myX=2,myZ=3,myYaw=0;
-const clock=new THREE.Clock();
-const UP=new THREE.Vector3(0,1,0);
+const clock=new THREE.Clock(),UP=new THREE.Vector3(0,1,0);
 
+function toast(t){
+ $("toast").textContent=t;$("toast").style.display="block";
+ clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").style.display="none",1800);
+}
+function escapeHtml(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function mat(color){return new THREE.MeshLambertMaterial({color})}
 function box(parent,w,h,d,color,x,y,z){
- const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));
- m.position.set(x,y,z);parent.add(m);return m;
-}
-function init(){
- scene=new THREE.Scene();
- scene.background=new THREE.Color(0x9bcce5);
- scene.fog=new THREE.Fog(0x9bcce5,90,250);
-
- camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,500);
- renderer=new THREE.WebGLRenderer({antialias:false});
- renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
- renderer.setSize(innerWidth,innerHeight);
- $("game").appendChild(renderer.domElement);
-
- scene.add(new THREE.HemisphereLight(0xffffff,0x647b54,2));
- const sun=new THREE.DirectionalLight(0xffffff,2);
- sun.position.set(-40,80,30);scene.add(sun);
-
- // Ground
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x6e9d58));
- ground.rotation.x=-Math.PI/2;ground.position.y=-.15;scene.add(ground);
-
- // Road
- const road=box(scene,15,.08,500,0x45494c,0,-.08,0);
- for(let z=-240;z<250;z+=12)
-  box(scene,.22,.035,5,0xffe7a1,0,-.02,z);
-
- // Roadside trees
- for(let i=0;i<110;i++){
-  const side=i%2?1:-1;
-  const z=-235+i*4.5;
-  const x=side*(12+Math.random()*18);
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.25,.4,2.5,6),mat(0x795032));
-  trunk.position.set(x,1.1,z);scene.add(trunk);
-  const crown=new THREE.Mesh(new THREE.ConeGeometry(2+Math.random(),5,6),mat(i%3?0x287b43:0x3d914b));
-  crown.position.set(x,4,z);scene.add(crown);
- }
- // Distant mountains
- for(let i=0;i<18;i++){
-  const m=new THREE.Mesh(new THREE.ConeGeometry(15+Math.random()*15,30+Math.random()*25,5),mat(0x78959a));
-  m.position.set((i-9)*28,12,-100-Math.random()*100);scene.add(m);
- }
- // Small cabins
- for(let i=0;i<5;i++){
-  const x=i%2?24:-24,z=-70+i*35;
-  box(scene,8,5,7,0xb77a43,x,2.5,z);
-  const roof=new THREE.Mesh(new THREE.ConeGeometry(6,4,4),mat(0x653c2d));
-  roof.position.set(x,7,z);roof.rotation.y=Math.PI/4;scene.add(roof);
- }
-
- rv=makeRV();scene.add(rv);
- addEventListener("resize",resize);
- animate();
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);parent.add(m);return m;
 }
 function makeRV(){
  const g=new THREE.Group();
- // Main body, lower chassis
  box(g,3.8,1.8,6.8,0xf1ead9,0,1.45,0);
  box(g,3.85,.22,6.9,0x283943,0,.48,0);
- // Front cabin
  box(g,3.7,1.35,1.7,0xe8a84c,0,2.9,2.1);
  box(g,3.15,.85,.08,0x7cc7df,0,3.05,2.98);
- // Side windows
- for(const side of [-1,1]){
-  for(const z of [-1.8,-.2,1.1]){
-   box(g,.04,.8,1.0,0x65b7ce,side*1.92,2.05,z);
-   box(g,.05,.08,1.08,0x394c54,side*1.94,2.05,z);
-  }
+ for(const side of [-1,1])for(const z of [-1.8,-.2,1.1]){
+  box(g,.04,.8,1.0,0x65b7ce,side*1.92,2.05,z);
+  box(g,.05,.08,1.08,0x394c54,side*1.94,2.05,z);
  }
- // Roof and front lights
  box(g,3.95,.2,6.9,0xd64e38,0,3.42,0);
  for(const x of [-1.25,1.25]){
   box(g,.55,.3,.08,0xfff1b4,x,1.1,3.43);
   box(g,.55,.3,.08,0xe33e32,x,1.1,-3.43);
  }
- // Wheels
  for(const x of [-1.98,1.98])for(const z of [-2,2]){
   const w=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.35,16),mat(0x171b20));
   w.rotation.z=Math.PI/2;w.position.set(x,.65,z);g.add(w);
   const hub=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.37,12),mat(0x9ba6aa));
   hub.rotation.z=Math.PI/2;hub.position.set(x*1.01,.65,z);g.add(hub);
  }
- // Hinged side door
- doorPivot=new THREE.Group();
- doorPivot.position.set(1.96,1.45,.9);
- const d=box(doorPivot,.12,1.55,.9,0xb9a98c,0,0,0);
- d.position.x=0;
- box(doorPivot,.14,.12,.12,0x333333,.08,0,-.32);
- g.add(doorPivot);
- // Bumper
+ doorPivot=new THREE.Group();doorPivot.position.set(1.96,1.45,.9);
+ box(doorPivot,.12,1.55,.9,0xb9a98c,0,0,0);
+ box(doorPivot,.14,.12,.12,0x333333,.08,0,-.32);g.add(doorPivot);
  box(g,4,.25,.25,0x68747b,0,.45,3.5);
  return g;
 }
 function makeCharacter(color){
  const g=new THREE.Group(),c=mat(color),dark=mat(0x20252a);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),c);
- head.position.y=1.65;g.add(head);
- const body=new THREE.Mesh(new THREE.CapsuleGeometry(.19,.65,4,8),c);
- body.position.y=1.05;g.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),c);head.position.y=1.65;g.add(head);
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(.19,.65,4,8),c);body.position.y=1.05;g.add(body);
  function limb(a,b,r=.075){
   const v=new THREE.Vector3().subVectors(b,a);
   const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,v.length(),8),c);
-  m.position.copy(a).add(b).multiplyScalar(.5);
-  m.quaternion.setFromUnitVectors(UP,v.normalize());g.add(m);
-  return m;
+  m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(UP,v.normalize());g.add(m);
  }
  limb(new THREE.Vector3(0,1.3,0),new THREE.Vector3(-.42,.85,0));
  limb(new THREE.Vector3(0,1.3,0),new THREE.Vector3(.42,.85,0));
  limb(new THREE.Vector3(0,.72,0),new THREE.Vector3(-.2,.08,0));
  limb(new THREE.Vector3(0,.72,0),new THREE.Vector3(.2,.08,0));
- const eye= new THREE.Mesh(new THREE.SphereGeometry(.035,6,5),dark);
- eye.position.set(-.09,1.7,.25);g.add(eye);
+ const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,6,5),dark);eye.position.set(-.09,1.7,.25);g.add(eye);
  const eye2=eye.clone();eye2.position.x=.09;g.add(eye2);
  return g;
 }
+function init(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x9bcce5);scene.fog=new THREE.Fog(0x9bcce5,90,250);
+ camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,500);
+ renderer=new THREE.WebGLRenderer({antialias:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);
+ $("game").appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x647b54,2));
+ const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(-40,80,30);scene.add(sun);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x6e9d58));ground.rotation.x=-Math.PI/2;ground.position.y=-.15;scene.add(ground);
+ box(scene,15,.08,500,0x45494c,0,-.08,0);
+ for(let z=-240;z<250;z+=12)box(scene,.22,.035,5,0xffe7a1,0,-.02,z);
+ for(let i=0;i<110;i++){
+  const side=i%2?1:-1,z=-235+i*4.5,x=side*(12+Math.random()*18);
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.25,.4,2.5,6),mat(0x795032));trunk.position.set(x,1.1,z);scene.add(trunk);
+  const crown=new THREE.Mesh(new THREE.ConeGeometry(2+Math.random(),5,6),mat(i%3?0x287b43:0x3d914b));crown.position.set(x,4,z);scene.add(crown);
+ }
+ for(let i=0;i<18;i++){
+  const m=new THREE.Mesh(new THREE.ConeGeometry(15+Math.random()*15,30+Math.random()*25,5),mat(0x78959a));
+  m.position.set((i-9)*28,12,-100-Math.random()*100);scene.add(m);
+ }
+ for(let i=0;i<5;i++){
+  const x=i%2?24:-24,z=-70+i*35;box(scene,8,5,7,0xb77a43,x,2.5,z);
+  const roof=new THREE.Mesh(new THREE.ConeGeometry(6,4,4),mat(0x653c2d));roof.position.set(x,7,z);roof.rotation.y=Math.PI/4;scene.add(roof);
+ }
+ rv=makeRV();scene.add(rv);addEventListener("resize",resize);animate();
+}
 function resize(){
- camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
- renderer.setSize(innerWidth,innerHeight);
+ if(!camera||!renderer)return;
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
 }
 function updateWorld(s){
- state=s;
- const v=s.vehicle;
- rv.position.set(v.x,0,v.z);rv.rotation.y=v.yaw;
+ if(!s||!s.vehicle||!Array.isArray(s.players))return;
+ state=s;const v=s.vehicle;rv.position.set(v.x||0,0,v.z||0);rv.rotation.y=v.yaw||0;
  const alive=new Set();
  s.players.forEach(p=>{
   alive.add(p.id);
-  if(!players3D.has(p.id)){
-   const m=makeCharacter(p.color||0xffbd59);
-   scene.add(m);players3D.set(p.id,m);
-  }
+  if(!players3D.has(p.id)){const m=makeCharacter(p.color||0xffbd59);scene.add(m);players3D.set(p.id,m)}
   const m=players3D.get(p.id);
-  if(p.id===myId){
-   if(!walking){myX=p.x;myZ=p.z;}
-   m.position.set(p.x,0,p.z);
-  }else m.position.lerp(new THREE.Vector3(p.x,0,p.z),.35);
+  if(p.id===myId){if(!walking){myX=p.x||0;myZ=p.z||0;}m.position.set(p.x||0,0,p.z||0)}
+  else m.position.lerp(new THREE.Vector3(p.x||0,0,p.z||0),.35);
   m.rotation.y=p.yaw||0;
  });
  for(const [id,m] of players3D)if(!alive.has(id)){scene.remove(m);players3D.delete(id)}
- $("friends").innerHTML="<b>FRIENDS</b><br>"+s.players.map(p=>(p.id===s.driverId?"🚐 ":"🙂 ")+escapeHtml(p.username)).join("<br>");
- $("info").textContent=`${v.speed.toFixed(1)} km/h • Gear ${v.gear} • ${s.driverId===myId?"You are driver":"Driver: "+(s.players.find(p=>p.id===s.driverId)?.username||"none")}`;
- document.querySelectorAll(".gear").forEach(b=>b.classList.toggle("active",b.dataset.gear===v.gear));
+ $("friends").innerHTML="<b>FRIENDS</b><br>"+s.players.map(p=>(p.id===s.driverId?"🚐 ":"🙂 ")+escapeHtml(p.username||"Player")).join("<br>");
+ $("info").textContent=`${Number(v.speed||0).toFixed(1)} km/h • Gear ${v.gear||gear} • ${s.driverId===myId?"You are driver":"Driver: "+(s.players.find(p=>p.id===s.driverId)?.username||"none")}`;
+ document.querySelectorAll(".gear").forEach(b=>b.classList.toggle("active",b.dataset.gear===(v.gear||gear)));
 }
-function escapeHtml(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function animate(){
- requestAnimationFrame(animate);
- const dt=Math.min(clock.getDelta(),.04);
+ requestAnimationFrame(animate);clock.getDelta();
  if(gameOn){
   const v=state.vehicle;
   if(walking){
-   const forward=joyY,side=joyX;
-   const speed=7*dt;
-   myYaw=Math.atan2(side,-forward);
-   myX+=Math.sin(myYaw)*Math.hypot(side,forward)*speed;
-   myZ+=Math.cos(myYaw)*Math.hypot(side,forward)*speed;
-   myX=Math.max(-35,Math.min(35,myX));
-   myZ=Math.max(-35,Math.min(35,myZ));
-   const me=players3D.get(myId);
-   if(me){me.position.set(myX,0,myZ);me.rotation.y=myYaw}
-   if(performance.now()-lastMove>100){
-    socket.emit("move",{x:myX,z:myZ,yaw:myYaw});
-    lastMove=performance.now();
+   const mag=Math.hypot(joyX,joyY);
+   if(mag>.08){
+    myYaw=Math.atan2(joyX,-joyY);
+    const speed=7/60;
+    myX+=Math.sin(myYaw)*mag*speed;myZ+=Math.cos(myYaw)*mag*speed;
+    myX=Math.max(-45,Math.min(45,myX));myZ=Math.max(-245,Math.min(245,myZ));
+    const me=players3D.get(myId);if(me){me.position.set(myX,0,myZ);me.rotation.y=myYaw}
+    if(performance.now()-lastMove>100){socket?.emit("move",{x:myX,z:myZ,yaw:myYaw});lastMove=performance.now()}
    }
+  }else if(myId===state.driverId&&performance.now()-lastDrive>100){
+   socket?.emit("drive",{gear,throttle,brake,steer});lastDrive=performance.now();
   }
-  if(!walking && myId===state.driverId && performance.now()-lastDrive>100){
-   socket.emit("drive",{gear,throttle,brake,steer});
-   lastDrive=performance.now();
-  }
-  const target=walking?
-   new THREE.Vector3(myX,1.2,myZ):
-   new THREE.Vector3(v.x,2,v.z);
-  const yaw=walking?myYaw:v.yaw;
+  const target=walking?new THREE.Vector3(myX,1.2,myZ):new THREE.Vector3(v.x||0,2,v.z||0);
+  const yaw=walking?myYaw:(v.yaw||0);
   const offset=new THREE.Vector3(0,6,-10).applyAxisAngle(UP,yaw);
-  const desired=target.clone().add(offset);
-  camera.position.lerp(desired,.12);
-  camera.lookAt(target);
+  camera.position.lerp(target.clone().add(offset),.12);camera.lookAt(target);
  }
  renderer.render(scene,camera);
 }
-function toast(t){
- $("toast").textContent=t;$("toast").style.display="block";
- setTimeout(()=>$("toast").style.display="none",1600);
+function playerName(){
+ const n=$("username").value.trim()||"RoadTripFriend";localStorage.setItem("rtc_username",n);return n;
 }
 function startRoom(r){
- if(!r.ok){$("menuMsg").textContent=r.error;return}
- roomCode=r.code;state=r.state;myId=socket.id;gameOn=true;
- $("menu").style.display="none";$("hud").style.display="block";
- $("roomLabel").textContent="ROOM "+roomCode;updateWorld(state);
- toast("Welcome to ROAD TRIP CHAOS!");
-}
-function name(){
- const n=$("username").value.trim()||"RoadTripFriend";
- localStorage.setItem("rtc_username",n);return n;
+ if(!r||!r.ok){$("menuMsg").textContent=r?.error||"Room create/join नहीं हुआ। Server connection जाँचें।";return}
+ roomCode=r.code;state=r.state;myId=socket?.id;gameOn=true;
+ $("menu").style.display="none";$("hud").style.display="block";$("roomLabel").textContent="ROOM "+roomCode;
+ updateWorld(state);toast("Welcome to ROAD TRIP CHAOS!");
 }
 $("username").value=localStorage.getItem("rtc_username")||"";
-$("saveName").onclick=()=>{name();toast("Username saved!")};
-$("create").onclick=()=>socket.emit("createRoom",{username:name()},startRoom);
-$("join").onclick=()=>socket.emit("joinRoom",{username:name(),code:$("roomCode").value},startRoom);
-socket.on("state",s=>{if(gameOn)updateWorld(s)});
-socket.on("toast",toast);
+$("saveName").onclick=()=>{playerName();toast("Username saved!")};
+$("create").onclick=()=>{
+ if(!socket){$("menuMsg").textContent="Server connection नहीं मिला। Page refresh करें।";return}
+ $("menuMsg").textContent="Room बनाया जा रहा है...";
+ socket.emit("createRoom",{username:playerName()},startRoom);
+};
+$("join").onclick=()=>{
+ if(!socket){$("menuMsg").textContent="Server connection नहीं मिला।";return}
+ $("menuMsg").textContent="Room join हो रहा है...";
+ socket.emit("joinRoom",{username:playerName(),code:$("roomCode").value.trim().toUpperCase()},startRoom);
+};
+if(socket){
+ socket.on("connect",()=>{$("menuMsg").textContent="Server connected. Room बनाओ या Join करो.";});
+ socket.on("connect_error",()=>{$("menuMsg").textContent="Server से connection नहीं हो रहा। थोड़ी देर बाद Refresh करें।";});
+ socket.on("state",s=>{if(gameOn)updateWorld(s)});
+ socket.on("toast",toast);
+}else $("menuMsg").textContent="Socket.IO लोड नहीं हुआ। Server URL जाँचें।";
 $("leave").onclick=()=>location.reload();
 
-document.querySelectorAll(".gear").forEach(b=>b.onclick=()=>gear=b.dataset.gear);
+document.querySelectorAll(".gear").forEach(b=>b.onclick=()=>{gear=b.dataset.gear;document.querySelectorAll(".gear").forEach(x=>x.classList.toggle("active",x===b))});
 function hold(id,down,up){
  const b=$(id);
- b.addEventListener("pointerdown",e=>{e.preventDefault();down();b.setPointerCapture(e.pointerId)});
- ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>b.addEventListener(ev,e=>{up()}));
+ b.addEventListener("pointerdown",e=>{e.preventDefault();down();try{b.setPointerCapture(e.pointerId)}catch{}});
+ ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>b.addEventListener(ev,()=>up()));
 }
 hold("gas",()=>throttle=1,()=>throttle=0);
 hold("brake",()=>brake=1,()=>brake=0);
+hold("left",()=>steer=-1,()=>steer=0);
+hold("right",()=>steer=1,()=>steer=0);
 
 $("enter").onclick=()=>{
  if(!walking){
-  if(Math.hypot(myX-state.vehicle.x,myZ-state.vehicle.z)>10){
-   toast("RV ke paas jao!");return;
-  }
-  walking=false;$("enter").textContent="EXIT RV";
-  toast("RV mein baith gaye!");
+  walking=true;myX=(state.vehicle.x||0)+4;myZ=state.vehicle.z||0;
+  $("enter").textContent="ENTER RV";toast("RV से बाहर आ गए!");
+  const me=players3D.get(myId);if(me)me.position.set(myX,0,myZ);
  }else{
-  walking=false;
-  const v=state.vehicle;
-  myX=v.x+4;myZ=v.z;
-  const me=players3D.get(myId);
-  if(me)me.position.set(myX,0,myZ);
-  $("enter").textContent="EXIT RV";
+  if(Math.hypot(myX-(state.vehicle.x||0),myZ-(state.vehicle.z||0))>10){toast("RV के पास जाओ!");return}
+  walking=false;$("enter").textContent="EXIT RV";toast("RV में बैठ गए!");
  }
 };
-$("enter").onclick=()=>{
- if(!walking){
-  walking=true;
-  myX=state.vehicle.x+4;myZ=state.vehicle.z;
-  $("enter").textContent="ENTER RV";
-  toast("RV se bahar aa gaye!");
- }else{
-  if(Math.hypot(myX-state.vehicle.x,myZ-state.vehicle.z)>10){toast("RV ke paas jao!");return}
-  walking=false;
-  $("enter").textContent="EXIT RV";
-  toast("RV mein baith gaye!");
- }
-};
-$("door").onclick=()=>{
- doorOpen=!doorOpen;
- doorPivot.rotation.y=doorOpen?-1.15:0;
- toast(doorOpen?"RV Door Open":"RV Door Closed");
-};
+$("door").onclick=()=>{doorOpen=!doorOpen;if(doorPivot)doorPivot.rotation.y=doorOpen?-1.15:0;toast(doorOpen?"RV Door Open":"RV Door Closed")};
 $("throw").onclick=()=>{
- const others=state.players.filter(p=>p.id!==myId);
- if(others.length)socket.emit("throwPlayer",others[0].id);
- else toast("Friend ke join hone ka wait karo!");
+ const other=state.players.find(p=>p.id!==myId);
+ if(other)socket?.emit("throwPlayer",other.id);else toast("Friend के join होने का इंतजार करें");
 };
 
-// Touch joystick
 const joy=$("joy"),knob=$("knob");
 function joyMove(e){
- const r=joy.getBoundingClientRect();
- const dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
- const max=r.width*.34,len=Math.hypot(dx,dy)||1;
- const x=dx/len*Math.min(len,max),y=dy/len*Math.min(len,max);
- knob.style.left=(r.width/2-21+x)+"px";
- knob.style.top=(r.height/2-21+y)+"px";
+ const r=joy.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+ const max=r.width*.34,len=Math.hypot(dx,dy)||1,x=dx/len*Math.min(len,max),y=dy/len*Math.min(len,max);
+ knob.style.left=`calc(50% - 19px + ${x}px)`;knob.style.top=`calc(50% - 19px + ${y}px)`;
  joyX=x/max;joyY=y/max;
 }
 joy.addEventListener("pointerdown",e=>{joy.setPointerCapture(e.pointerId);joyMove(e)});
-joy.addEventListener("pointermove",e=>{if(e.buttons)joyMove(e)});
-function joyEnd(){joyX=0;joyY=0;knob.style.left="32px";knob.style.top="32px"}
-joy.addEventListener("pointerup",joyEnd);
-joy.addEventListener("pointercancel",joyEnd);
+joy.addEventListener("pointermove",e=>{if(e.buttons||e.pressure>0)joyMove(e)});
+function joyEnd(){joyX=0;joyY=0;knob.style.left="calc(50% - 19px)";knob.style.top="calc(50% - 19px)"}
+joy.addEventListener("pointerup",joyEnd);joy.addEventListener("pointercancel",joyEnd);
 
-// Keyboard testing
 addEventListener("keydown",e=>{
  if(e.key==="w"||e.key==="ArrowUp")throttle=1;
  if(e.key==="s"||e.key==="ArrowDown")brake=1;
@@ -390,6 +327,14 @@ addEventListener("keyup",e=>{
  if(["w","ArrowUp"].includes(e.key))throttle=0;
  if(["s","ArrowDown"].includes(e.key))brake=0;
  if(["a","ArrowLeft","d","ArrowRight"].includes(e.key))steer=0;
+});
+
+$("rotateBtn").addEventListener("click",async()=>{
+ try{
+  if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
+  if(screen.orientation?.lock)await screen.orientation.lock("landscape");
+  toast("Landscape mode requested");
+ }catch(err){console.log("Landscape lock unavailable:",err);toast("Auto Rotate चालू करके फोन आड़ा करें")}
 });
 init();
 </script>
