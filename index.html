@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ROAD TRIP CHAOS</title>
+<style>
+:root{--bg:#101820;--panel:#192832;--line:#35505d;--accent:#ffb84d;--txt:#f4f7f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,Arial;overflow:hidden}
+#game{position:fixed;inset:0}canvas{display:block}
+.panel{background:#14232ddd;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 12px 40px #0006}
+#menu{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:linear-gradient(#07131dcc,#07131df2);z-index:5}
+.card{width:min(440px,100%);text-align:center}.logo{font-size:clamp(30px,8vw,48px);font-weight:1000;line-height:1;color:var(--accent);text-shadow:3px 3px #703d17;margin:8px 0}
+.sub{color:#b8cbd2;margin-bottom:18px}.field{width:100%;padding:13px;border-radius:10px;border:1px solid #526d79;background:#0b171e;color:white;font-size:16px;margin:6px 0}
+button{border:0;border-radius:11px;padding:12px 15px;background:var(--accent);color:#241707;font-weight:800;font-size:15px;cursor:pointer;min-height:44px}
+button.secondary{background:#29414d;color:white;border:1px solid #52707d}button:disabled{opacity:.45}
+.row{display:flex;gap:8px}.row>*{flex:1}.hint{font-size:12px;color:#a9bec7;margin-top:12px}
+#hud{position:fixed;inset:0;pointer-events:none;display:none}.hudbox{pointer-events:auto;background:#10212ddd;border:1px solid #47616d;border-radius:12px;padding:9px 12px}
+#topbar{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+#roomLabel{font-weight:900;color:var(--accent)}#status{font-size:12px;color:#b9cbd2}
+#gearBox{position:absolute;top:72px;right:10px;display:flex;flex-direction:column;gap:5px;width:62px}
+.gear{padding:8px 4px;min-height:35px;background:#29414d;color:white;border:1px solid #59727d}.gear.active{background:var(--accent);color:#211707}
+#controls{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:end;gap:8px}
+#controls button{min-width:58px;opacity:.95}.pedals{display:flex;gap:8px}.steer{display:flex;gap:6px}
+#players{font-size:12px;max-width:155px;line-height:1.6}#chatlog{font-size:12px;max-height:72px;overflow:hidden;max-width:210px}
+#chatrow{display:flex;gap:5px;margin-top:5px}#chatrow input{min-width:0;width:100px;background:#09141a;color:white;border:1px solid #4c6875;border-radius:7px;padding:7px}
+#toast{position:absolute;top:48%;left:50%;transform:translate(-50%,-50%);background:#111e;padding:12px 18px;border-radius:12px;display:none;font-weight:800}
+@media(max-width:430px){#controls button{padding:10px 9px;font-size:13px}.hudbox{padding:7px 9px}#players{max-width:120px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="menu">
+ <div class="panel card">
+  <div style="font-size:38px">🚐</div><div class="logo">ROAD TRIP<br>CHAOS</div>
+  <div class="sub">Friends together. Roads forever. 😂</div>
+  <input id="username" class="field" maxlength="18" placeholder="Apna username likho">
+  <button id="saveName" class="secondary" style="width:100%">Username Save Karo</button>
+  <div style="height:10px"></div>
+  <button id="create" style="width:100%">CREATE ROOM</button>
+  <div class="row" style="margin-top:8px"><input id="roomCode" class="field" maxlength="4" placeholder="ROOM CODE"><button id="join">JOIN</button></div>
+  <div id="menuMsg" class="hint">Maximum 6 friends. Room code apne doston ko bhejo.</div>
+  <div class="hint">3D online prototype • Mobile + PC</div>
+ </div>
+</div>
+<div id="hud">
+ <div id="topbar">
+  <div class="hudbox"><div id="roomLabel">ROOM ----</div><div id="status">Connecting...</div></div>
+  <div class="hudbox"><div id="players">Players</div></div>
+  <div class="hudbox"><button id="leave" class="secondary">MENU</button></div>
+ </div>
+ <div id="gearBox" class="hudbox">
+  <b style="text-align:center">GEAR</b>
+  <button class="gear active" data-gear="P">P</button><button class="gear" data-gear="R">R</button><button class="gear" data-gear="N">N</button>
+  <button class="gear" data-gear="1">1</button><button class="gear" data-gear="2">2</button><button class="gear" data-gear="3">3</button><button class="gear" data-gear="4">4</button>
+ </div>
+ <div id="controls">
+  <div class="steer"><button id="left" class="secondary">◀</button><button id="right" class="secondary">▶</button></div>
+  <div class="pedals"><button id="throw" class="secondary">🤸 THROW</button><button id="brake" class="secondary">BRAKE</button><button id="gas">GAS ▲</button></div>
+ </div>
+ <div id="toast"></div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+const socket=io();
+const $=id=>document.getElementById(id);
+let myId=null,roomCode="",gameOn=false,gear="P",throttle=0,brake=0,steer=0,state={players:[],vehicle:{x:0,z:0,yaw:0,speed:0,gear:"P"}};
+let scene,camera,renderer,rv,players3D=new Map(),roadGroup;
+const clock=new THREE.Clock();
+
+function init3D(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc9df);scene.fog=new THREE.Fog(0x9bc9df,35,130);
+ camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,250);
+ renderer=new THREE.WebGLRenderer({antialias:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;
+ $("game").appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x68745a,2));
+ const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(-20,35,15);scene.add(sun);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshLambertMaterial({color:0x668c55}));ground.rotation.x=-Math.PI/2;ground.position.y=-.12;scene.add(ground);
+ roadGroup=new THREE.Group();scene.add(roadGroup);
+ const road=new THREE.Mesh(new THREE.PlaneGeometry(13,220),new THREE.MeshLambertMaterial({color:0x55585b}));road.rotation.x=-Math.PI/2;road.position.y=-.08;roadGroup.add(road);
+ for(let z=-105;z<110;z+=9){const stripe=new THREE.Mesh(new THREE.BoxGeometry(.22,.03,4),new THREE.MeshBasicMaterial({color:0xf2e5a2}));stripe.position.set(0,-.045,z);roadGroup.add(stripe)}
+ for(let i=0;i<42;i++){const side=i%2?1:-1,z=-100+i*5;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,2,5),new THREE.MeshLambertMaterial({color:0x765137}));trunk.position.set(side*(10+Math.random()*12),1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.7+Math.random(),4,6),new THREE.MeshLambertMaterial({color: i%3?0x347c45:0x4c9149}));crown.position.set(trunk.position.x,3.6,z);scene.add(crown)}
+ rv=makeRV();scene.add(rv);
+ window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+ animate();
+}
+function makeRV(){
+ const g=new THREE.Group(),body=new THREE.Mesh(new THREE.BoxGeometry(3.5,1.55,6),new THREE.MeshLambertMaterial({color:0xf0e5c9}));body.position.y=1.25;g.add(body);
+ const cab=new THREE.Mesh(new THREE.BoxGeometry(3.25,1.1,1.65),new THREE.MeshLambertMaterial({color:0xe8a84c}));cab.position.set(0,2.05,1.55);g.add(cab);
+ const glass=new THREE.Mesh(new THREE.BoxGeometry(2.6,.65,.05),new THREE.MeshBasicMaterial({color:0x8bd0df}));glass.position.set(0,2.18,2.39);g.add(glass);
+ const roof=new THREE.Mesh(new THREE.BoxGeometry(3.65,.18,6.1),new THREE.MeshLambertMaterial({color:0xb94d36}));roof.position.y=2.1;g.add(roof);
+ for(const x of [-1.85,1.85])for(const z of [-1.9,1.9]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.28,10),new THREE.MeshLambertMaterial({color:0x202326}));w.rotation.z=Math.PI/2;w.position.set(x,.55,z);g.add(w)}
+ return g;
+}
+function makeStick(color){
+ const g=new THREE.Group(),mat=new THREE.MeshLambertMaterial({color}),black=new THREE.MeshLambertMaterial({color:0x202020});
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.28,8,6),mat);head.position.y=1.65;g.add(head);
+ const torso=new THREE.Mesh(new THREE.CylinderGeometry(.11,.14,.72,6),mat);torso.position.y=1.05;g.add(torso);
+ function limb(a,b,r=.07){const d=new THREE.Vector3().subVectors(b,a);const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),5),mat);m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());g.add(m)}
+ limb(new THREE.Vector3(0,1.3,0),new THREE.Vector3(-.42,.9,0));limb(new THREE.Vector3(0,1.3,0),new THREE.Vector3(.42,.9,0));
+ limb(new THREE.Vector3(0,.72,0),new THREE.Vector3(-.22,.08,0));limb(new THREE.Vector3(0,.72,0),new THREE.Vector3(.22,.08,0));
+ const eye1=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),black);eye1.position.set(-.09,1.7,.24);g.add(eye1);const eye2=eye1.clone();eye2.position.x=.09;g.add(eye2);
+ return g;
+}
+function updateWorld(s){
+ state=s;const v=s.vehicle;
+ rv.position.set(v.x,0,v.z);rv.rotation.y=v.yaw;
+ const forward=new THREE.Vector3(Math.sin(v.yaw),0,Math.cos(v.yaw));
+ const camTarget=rv.position.clone().add(new THREE.Vector3(0,2,0));
+ const camPos=rv.position.clone().add(new THREE.Vector3(0,8,-13).applyAxisAngle(new THREE.Vector3(0,1,0),v.yaw));
+ camera.position.lerp(camPos,.12);camera.lookAt(camTarget);
+ const alive=new Set();
+ s.players.forEach((p,i)=>{alive.add(p.id);if(!players3D.has(p.id)){const model=makeStick(p.color||0xffcc77);scene.add(model);players3D.set(p.id,model)}
+ const m=players3D.get(p.id);
+ if(p.id===myId){m.position.set(p.x,0,p.z)}else m.position.lerp(new THREE.Vector3(p.x,0,p.z),.3);
+ m.rotation.y=p.yaw||0;
+ });
+ for(const [id,m] of players3D)if(!alive.has(id)){scene.remove(m);players3D.delete(id)}
+ $("players").innerHTML="<b>FRIENDS</b><br>"+s.players.map(p=>(p.id===s.driverId?"🚐 ":"🙂 ")+escapeHtml(p.username)).join("<br>");
+ $("status").textContent=`${v.speed.toFixed(1)} km/h • Gear ${v.gear} • ${s.driverId===myId?"You are driver":"Driver: "+(s.players.find(p=>p.id===s.driverId)?.username||"none")}`;
+ document.querySelectorAll(".gear").forEach(b=>b.classList.toggle("active",b.dataset.gear===v.gear));
+}
+function escapeHtml(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function animate(){
+ requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
+ if(gameOn&&myId===state.driverId){socket.emit("drive",{gear,throttle,brake,steer})}
+ renderer.render(scene,camera);
+}
+function startRoom(result){
+ if(!result.ok){$("menuMsg").textContent=result.error;return}
+ roomCode=result.code;state=result.state;gameOn=true;$("menu").style.display="none";$("hud").style.display="block";$("roomLabel").textContent="ROOM "+roomCode;updateWorld(state);
+}
+$("saveName").onclick=()=>{const n=$("username").value.trim();if(n){localStorage.setItem("rtc_username",n);$("menuMsg").textContent="Username save ho gaya: "+n}else $("menuMsg").textContent="Pehle username likho."};
+$("username").value=localStorage.getItem("rtc_username")||"";
+function username(){const n=$("username").value.trim()||"RoadTripFriend";localStorage.setItem("rtc_username",n);return n}
+$("create").onclick=()=>socket.emit("createRoom",{username:username()},startRoom);
+$("join").onclick=()=>socket.emit("joinRoom",{username:username(),code:$("roomCode").value},startRoom);
+socket.on("state",s=>{if(gameOn)updateWorld(s)});
+socket.on("toast",msg=>{const t=$("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",1600)});
+$("leave").onclick=()=>location.reload();
+document.querySelectorAll(".gear").forEach(b=>b.onclick=()=>gear=b.dataset.gear);
+function hold(id,down,up){const b=$(id);b.addEventListener("pointerdown",e=>{e.preventDefault();down()});["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,up))}
+hold("gas",()=>throttle=1,()=>throttle=0);hold("brake",()=>brake=1,()=>brake=0);
+hold("left",()=>steer=-1,()=>steer=0);hold("right",()=>steer=1,()=>steer=0);
+$("throw").onclick=()=>{const others=state.players.filter(p=>p.id!==myId);if(!others.length)return showToast("Pehle friend join kare!");let nearest=others.sort((a,b)=>Math.hypot(a.x-state.players.find(p=>p.id===myId).x,a.z-state.players.find(p=>p.id===myId).z)-Math.hypot(b.x-state.players.find(p=>p.id===myId).x,b.z-state.players.find(p=>p.id===myId).z))[0];socket.emit("throwPlayer",nearest.id)};
+function showToast(m){$("toast").textContent=m;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",1500)}
+// Simple keyboard controls for desktop testing
+addEventListener("keydown",e=>{if(e.key==="ArrowUp"||e.key==="w")throttle=1;if(e.key==="ArrowDown"||e.key==="s")brake=1;if(e.key==="ArrowLeft"||e.key==="a")steer=-1;if(e.key==="ArrowRight"||e.key==="d")steer=1});
+addEventListener("keyup",e=>{if(["ArrowUp","w"].includes(e.key))throttle=0;if(["ArrowDown","s"].includes(e.key))brake=0;if(["ArrowLeft","a","ArrowRight","d"].includes(e.key))steer=0});
+init3D();
+</script>
+</body></html>
